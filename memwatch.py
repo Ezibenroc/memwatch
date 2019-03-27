@@ -45,6 +45,7 @@ class Watcher:
         stdout, stderr = proc.communicate()
         sys.stdout.write(stdout.decode())
         sys.stderr.write(stderr.decode())
+        self.outputfile.flush()
         sys.exit(proc.returncode)
 
 

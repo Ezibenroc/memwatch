@@ -35,16 +35,23 @@ class Watcher:
         meminfo = self.parse_meminfo()
         timestamp = str(datetime.datetime.now())
         self.writer.writerow([timestamp] + [meminfo[k] for k in self.meminfo_keys])
+        return meminfo['MemAvailable']
 
     def run_and_watch(self):
-        self.add_measure()
+        min_mem = self.add_measure()
+        max_mem = min_mem
         proc = Popen(self.cmd, stdout=PIPE, stderr=PIPE)
         while proc.poll() is None:
             time.sleep(self.time_interval)
-            self.add_measure()
+            new_mem = self.add_measure()
+            if new_mem > max_mem:
+                max_mem = new_mem
+            if new_mem < min_mem:
+                min_mem = new_mem
         stdout, stderr = proc.communicate()
         sys.stdout.write(stdout.decode())
         sys.stderr.write(stderr.decode())
+        sys.stderr.write(f'Memory consumption: {(max_mem - min_mem)*1e-9:.3f} GB\n')
         self.outputfile.flush()
         sys.exit(proc.returncode)
 
